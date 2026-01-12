@@ -137,3 +137,84 @@ export const getUserDrawings = async (req, res) => {
         });
     }
 };
+
+
+
+// drawing.controller.js mein add karo
+export const deleteDrawing = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.id;
+
+        const drawing = await Drawing.findOneAndDelete({
+            _id: id,
+            ownerId: userId  // Only owner can delete
+        });
+
+        if (!drawing) {
+            return res.status(404).json({
+                message: "Drawing not found or unauthorized"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Drawing deleted successfully"
+        });
+    } catch (error) {
+        console.log(`error from deleteDrawing: ${error}`);
+        return res.status(500).json({
+            message: "Failed to delete drawing"
+        });
+    }
+};
+
+
+export const toggleDrawingVisibility = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.id;
+
+        const drawing = await Drawing.findOne({ _id: id, ownerId: userId });
+        
+        if (!drawing) {
+            return res.status(404).json({
+                message: "Drawing not found"
+            });
+        }
+
+        drawing.isPublic = !drawing.isPublic;
+        await drawing.save();
+
+        return res.status(200).json({
+            message: `Drawing is now ${drawing.isPublic ? 'public' : 'private'}`,
+            isPublic: drawing.isPublic
+        });
+    } catch (error) {
+        console.log(`error from toggleVisibility: ${error}`);
+        return res.status(500).json({
+            message: "Failed to update visibility"
+        });
+    }
+};
+
+
+export const searchDrawings = async (req, res) => {
+    try {
+        const { query } = req.query;
+        const userId = req.id;
+
+        const drawings = await Drawing.find({
+            ownerId: userId,
+            title: { $regex: query, $options: 'i' }
+        }).select('title key isPublic createdAt updatedAt');
+
+        return res.status(200).json({
+            message: "Search results",
+            drawings
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Search failed"
+        });
+    }
+};
