@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken'
 import { User } from "../models/user.model.js"
 import bcrypt  from "bcryptjs"
 import { ENV } from '../config/env.js'
+import { Drawing } from '../models/drawing.model.js'
+import { nanoid } from 'zod'
 export const register = async(req,res)=>{
     try {
         
@@ -23,6 +25,26 @@ export const register = async(req,res)=>{
 
         const hashPassword = await bcrypt.hash(password, 10)
 
+        
+            const drawing  = await Drawing.create({
+            title: `Untitled Drawing - ${user.username}`,
+           
+            elements: [],
+            appState: {
+                zoom: { value: 1 },
+                scrollX: 0,
+                scrollY: 0,
+                currentItemStrokeColor: '#1e1e1e',
+                currentItemBackgroundColor: '#ffffff',
+                currentItemRoughness: 1,
+                selectedElementIds: [],
+                viewBackgroundColor: '#ffffff'
+            },
+            version: 0,
+            isPublic: false,
+            ownerId: user._id
+        });
+
         const user = await User.create({
             email, 
             username,
@@ -31,7 +53,8 @@ export const register = async(req,res)=>{
 
         const token = await jwt.sign({userId:user._id}, ENV.JWT_SECRET)
         return res.status(201).cookie("token",token,{ maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true,  secure: true, sameSite: "none"}).json({
-            message:`${user.username} Registered successfully`
+            message:`${user.username} Registered successfully`,
+            drawing
         })
     } catch (error) {
         console.log(`error from register, ${error}`)
@@ -66,9 +89,31 @@ export const login = async(req,res)=>{
         }
 
 
-         const token = await jwt.sign({userId:user._id}, ENV.JWT_SECRET)
+        const token = await jwt.sign({userId:user._id}, ENV.JWT_SECRET)
+        // const key = nanoid(6)
+
+             const drawing= await Drawing.create({
+            title: `Untitled Drawing - ${user.username}`,
+        //    key,
+            elements: [],
+            appState: {
+                zoom: { value: 1 },
+                scrollX: 0,
+                scrollY: 0,
+                currentItemStrokeColor: '#1e1e1e',
+                currentItemBackgroundColor: '#ffffff',
+                currentItemRoughness: 1,
+                selectedElementIds: [],
+                viewBackgroundColor: '#ffffff'
+            },
+            version: 0,
+            isPublic: false,
+            ownerId: user._id
+        });
+
         return res.status(201).cookie("token",token,{ maxAge: 1 * 24 * 60 * 60 * 1000, httpOnly: true,  secure: true, sameSite: "none"}).json({
-            message:`${user.username} logged in successfully`
+            message:`${user.username} logged in successfully`,
+            drawing
         })
 
     } catch (error) {
@@ -81,6 +126,7 @@ export const getUser = async(req, res)=>{
     try {
         const userId  = req.id;
 
+        const token = req.cookies.token
         
         const user = await User.findById(userId)
 
@@ -91,7 +137,12 @@ export const getUser = async(req, res)=>{
             })
         }
 
-        return res.status(201).json(user)
+        return res.status(201).json(
+            {
+                user,
+                token
+            }
+        )
     } catch (error) {
         console.log(`error from getUser, ${error}`)
     }

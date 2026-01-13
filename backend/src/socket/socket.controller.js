@@ -55,8 +55,8 @@ export const initSocket = (httpServer) => {
       try {
         const drawing = await Drawing.findOne({
           $or: [
-            { key, isPublic: true },
-            { key, ownerId: socket.userId }
+            { _id:key, isPublic: true },
+            { _id:key, ownerId: socket.userId }
           ]
         });
 

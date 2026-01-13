@@ -8,11 +8,11 @@ export const createDrawing = async (req, res) => {
         const { title, elements, appState, isPublic } = req.validatedData;
         
         // Generate unique key
-        const key = nanoid(8);
+        // const key = nanoid(8);
         
         const drawing = await Drawing.create({
             title,
-            key,
+            // key,
             elements: elements || [],
             appState: appState || {
                 zoom: { value: 1 },
@@ -79,12 +79,12 @@ export const getDrawing = async (req, res) => {
 
 export const updateDrawing = async (req, res) => {
     try {
-        const key  = req.params.id;
+        const key = req.params.id;
         const { elements, appState, version } = req.validatedData;
         const userId = req.id;
 
         const drawing = await Drawing.findOneAndUpdate(
-            { key, ownerId: userId },
+            { _id:key, ownerId: userId },
             {
                 elements,
                 appState,
@@ -103,7 +103,7 @@ export const updateDrawing = async (req, res) => {
         return res.status(200).json({
             message: "Drawing updated successfully",
             drawing: {
-                key: drawing.key,
+                _id: drawing.key,
                 elements: drawing.elements,
                 appState: drawing.appState,
                 version: drawing.version
@@ -215,6 +215,29 @@ export const searchDrawings = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             message: "Search failed"
+        });
+    }
+};
+
+
+export const getPublicDrawings = async (req, res) => {
+    try {
+        const { page = 1, limit = 20 } = req.query;
+
+        const drawings = await Drawing.find({ isPublic: true })
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit))
+            .select('title key createdAt ownerId')
+            .populate('ownerId', 'username');
+
+        return res.status(200).json({
+            message: "Public drawings fetched",
+            drawings
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Failed to fetch public drawings"
         });
     }
 };

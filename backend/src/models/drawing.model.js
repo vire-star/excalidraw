@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const drawingSchema = new mongoose.Schema({
   title: { type: String, required: true, maxlength: 100 },
-  key: { type: String, required: true, unique: true, index: true },
+  // key: { type: String, required: true, unique: true, index: true },
   
   // ✅ INLINE Mongoose sub-schemas banao
   elements: [{

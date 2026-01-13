@@ -10,6 +10,5 @@ const drawingRoute = express.Router()
 drawingRoute.post('/createDrawing', auth, validate(CreateDrawingSchema), createDrawing)
 drawingRoute.get('/getDrawing/:id', auth ,getDrawing)
 drawingRoute.get('/allDrawing', auth ,getUserDrawings)
-drawingRoute.put('/updateDrawing/:id', auth,validate(UpdateDrawingSchema),updateDrawing)
-
+drawingRoute.put('/updateDrawing/:id', auth, validate(UpdateDrawingSchema), updateDrawing);
 export default drawingRoute
